@@ -835,11 +835,23 @@
         this.propagationStopped = true;
     }
 
+    var currentTarget = null;
+    function getCurrentTarget(){
+        return currentTarget;
+    }
     function topEvent(event) {
         var dom = event.target;
         event.stopPropagation = stopPropagation;
         event.stopImmediatePropagation = stopImmediatePropagation;
         event.propagationStopped = false;
+        currentTarget = null;
+        Object.defineProperty(event, 'currentTarget', {get: getCurrentTarget})
+
+        var dom2 = dom;
+        while (dom2 && !dom2._events) {
+            dom2 = dom2.parentNode;
+        }
+        currentTarget = dom2;
         do {
             if (event.propagationStopped) {
                 break;
@@ -849,6 +861,12 @@
                 if (callback) {
                     callback.call(dom, event);
                 }
+
+                dom2 = dom.parentNode;
+                while (dom2 && !dom2._events) {
+                    dom2 = dom2.parentNode;
+                }
+                currentTarget = dom2;
             }
         } while (dom = dom.parentNode);
     }
